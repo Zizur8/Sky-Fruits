@@ -1,0 +1,15 @@
+LA BATALLA FINAL DE SKY FRUITS
+
+Llegas al score 1000.   Parar,esconder el timer.     Esconder el boton de pausa.  Parar los POSITION 2D de las fresas(normal,mala,veneno y bonus.)
+
+La animacion del OVNI y crear un spawn de fresas malas que concuerden con los tiempos de salida y las animacion que hace el BOSS.  
+                                  {Procesos}
+
+                    {Son 3 fases en la batalla final}         {Fase 1}
+                                                                                Hacer las fresas malas el tamaño normal pero que salgan a una velocidad muy rapida                                                                                 pero que se puedan esquivar.
+                                                                                 
+                            
+                                                                                  {Fase 2}
+                                                                                  Las fresas malas cambiarian a un tamaño grande que ocupen la mitad de la pantalla
+                                                                                  pero que haya espacios para moverse y esquivarse. 
+                                                                                  
