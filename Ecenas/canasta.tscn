@@ -1,0 +1,239 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://Sprites/players/canastaink.png" type="Texture" id=1]
+[ext_resource path="res://sounds/tomar fresa2 game.wav" type="AudioStream" id=2]
+[ext_resource path="res://sounds/musica de fondo del player.wav" type="AudioStream" id=4]
+[ext_resource path="res://Sprites/players/canasta_power.png" type="Texture" id=5]
+[ext_resource path="res://sounds/muerte_sound.wav" type="AudioStream" id=6]
+[ext_resource path="res://Sprites/players/canastaink_brillante.png" type="Texture" id=7]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Area2D
+
+signal picked
+
+var screen_size
+export (int) var speed
+var movimiento = Vector2()
+
+var previous_mouse_position = Vector2()
+var is_dragging = false
+
+var t = Timer.new()
+var t_veneno = Timer.new()
+
+func _ready():
+	t.wait_time = 10
+	t.one_shot = true
+	t.connect(\"timeout\",self,\"_on_timer_power\")
+	add_child(t)
+	if Globals.listen_music == true:
+		_audio_main()
+	
+	
+	t_veneno.wait_time = 2
+	t_veneno.one_shot = true
+	t_veneno.connect(\"timeout\",self,\"_on_timer_veneno\")
+	add_child(t_veneno)
+	
+	
+	screen_size = get_viewport_rect().size
+	set_process(true)
+	
+	$brillo.hide()
+	
+func _process(delta):
+	movimiento = Vector2()
+	
+	if Globals.quit == true:
+		is_dragging = false
+		_on_canasta_body_entered(false)
+	if Globals.mecanica == true:
+		$Sprite.play(\"power_up\")
+		$brillo.hide()
+	else:
+		$Sprite.play(\"normal\")
+	
+	var minimo = get_tree().get_nodes_in_group(\"min\")[0].global_position
+	var maximo = get_tree().get_nodes_in_group(\"max\")[0].global_position
+	var x = get_tree().get_nodes_in_group(\"exis\")[0].global_position
+	var salida = get_tree().get_nodes_in_group(\"sal\")[0].global_position
+	
+	if (global_position.x < minimo.x):
+		global_position.x = minimo.x + 0
+	
+	if (global_position.x > maximo.x):
+		global_position.x = maximo.x - 0
+		
+	if (global_position.y < x.y):
+		global_position.y = x.y + 0
+	elif (global_position.y > x.y):
+		global_position.y = x.y + 0
+	
+	if Globals.time2 >= 100:
+		$AudioStreamPlayer3.stop()
+
+func _on_canasta_body_entered(body):
+	if Globals.muerte == true:
+		$AudioStreamPlayer3.stop()
+		return
+	
+	if body.is_in_group(\"fresa\") and Globals.mecanica == true:
+		_audio_tomar_fresas()
+		Globals.score += 5
+		body.queue_free()
+	
+	if body.is_in_group(\"fresa\") and Globals.mecanica == false:
+		_audio_tomar_fresas()
+		Globals.score += 50 #es uno
+		body.queue_free()
+		$brillo.show()
+	
+	if body.is_in_group(\"bonus\"):
+		$AudioStreamPlayer3.stop()
+		Globals.mecanica = true
+		t.start()
+		Globals.mancha = false
+		Globals.sound = true
+		body.queue_free()
+	
+	
+	if body.is_in_group(\"mala\") and Globals.mecanica == true:
+		Globals.score += 2
+		body.queue_free()
+	
+	
+	if body.is_in_group(\"mala\") and Globals.mecanica == false:
+		Globals.muerte = true
+		Globals.quit = true
+		Globals.mancha = false
+		_audio_muerte()
+		
+		emit_signal(\"picked\", \"mala\")
+		#body.queue_free()
+	
+	
+	if body.is_in_group(\"veneno\") and Globals.mecanica == false:
+		Globals.mancha = true
+		t_veneno.start()
+		body.queue_free()
+	
+	
+	if body.is_in_group(\"veneno\") and Globals.mecanica == true:
+		Globals.score += 2
+		body.queue_free()
+	
+	if body.is_in_group(\"fresa_ovni\") and Globals.mecanica == false:
+		Globals.muerte = true
+		Globals.quit = true
+		Globals.anim_perdedor = true
+		body.queue_free()
+	
+	if body.is_in_group(\"fresa_ovni\") and Globals.mecanica == true:
+		body.queue_free()
+	
+	if body.is_in_group(\"fresa_ovni_two\") and Globals.mecanica == false:
+		Globals.muerte = true
+		Globals.quit = true
+		Globals.anim_perdedor = true
+		body.queue_free()
+	
+	if body.is_in_group(\"fresa_ovni_two\") and Globals.mecanica == true:
+		body.queue_free()
+	
+	if body.has_method(\"pickup\"):
+		body.pickup()
+
+func _on_canasta_input_event(viewport, event, shape_idx):
+	if event is InputEventScreenDrag:
+		get_tree().set_input_as_handled()
+		previous_mouse_position = event.position
+		is_dragging = true
+
+func _input(event):
+	if is_dragging and event is InputEventScreenDrag:
+		position += event.position - previous_mouse_position
+		previous_mouse_position = event.position
+
+func _on_timer_power():
+	_audio_main()
+	Globals.mecanica = false
+	if Globals.score >= 1000:
+		Globals.mecanica = false
+
+func _on_timer_veneno():
+	Globals.mancha = false
+
+
+func _on_AudioStreamPlayer_finished():
+		$brillo.hide()
+
+func _audio_tomar_fresas():
+	if Globals.listen_music == true:
+		$AudioStreamPlayer.play()
+func _audio_main():
+	if Globals.listen_music == true:
+		$AudioStreamPlayer3.play()
+func _audio_muerte():
+	if Globals.listen_music == true:
+		$muerte_sound.play()
+"
+
+[sub_resource type="SpriteFrames" id=2]
+animations = [ {
+"frames": [ ExtResource( 1 ) ],
+"loop": true,
+"name": "normal",
+"speed": 2.0
+}, {
+"frames": [ ExtResource( 5 ) ],
+"loop": true,
+"name": "power_up",
+"speed": 5.0
+} ]
+
+[sub_resource type="CapsuleShape2D" id=3]
+radius = 13.2046
+height = 23.2281
+
+[node name="canasta" type="Area2D" groups=[
+"canasto",
+]]
+light_mask = 0
+position = Vector2( 226.923, 762.198 )
+scale = Vector2( 2, 2 )
+script = SubResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="AnimatedSprite" parent="."]
+scale = Vector2( 0.1, 0.1 )
+frames = SubResource( 2 )
+animation = "normal"
+
+[node name="brillo" type="Sprite" parent="."]
+scale = Vector2( 0.1, 0.1 )
+texture = ExtResource( 7 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." groups=[
+"col",
+]]
+position = Vector2( 0, -1.45667 )
+rotation = 1.5708
+shape = SubResource( 3 )
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 2 )
+volume_db = -22.0
+
+[node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 4 )
+volume_db = -25.0
+
+[node name="muerte_sound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 6 )
+volume_db = 10.0
+[connection signal="body_entered" from="." to="." method="_on_canasta_body_entered"]
+[connection signal="input_event" from="." to="." method="_on_canasta_input_event"]
+[connection signal="finished" from="AudioStreamPlayer" to="." method="_on_AudioStreamPlayer_finished"]
